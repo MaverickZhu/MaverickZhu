@@ -1,0 +1,259 @@
+/* 全局样式 */
+:root {
+    --primary-color: #4CAF50;
+    --secondary-color: #f9f9f9;
+    --accent-color: #3498db;
+    --text-color: #333;
+    --border-color: #ddd;
+    --shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f5f5f5;
+    height: 100vh;
+    overflow: hidden;
+}
+
+h1, h2 {
+    text-align: center;
+    color: var(--text-color);
+    margin: 0;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow);
+}
+
+button:hover {
+    background-color: var(--accent-color);
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+input[type="file"] {
+    padding: 10px;
+    font-size: 16px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    resize: vertical;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    flex: 7;
+    background-color: white;
+    padding: 10px;
+    overflow: hidden;
+    border-right: 1px solid var(--border-color);
+}
+
+.header {
+    flex-shrink: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.upload-section, .ask-form-section {
+    flex-shrink: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.conversation-section {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: var(--secondary-color);
+}
+
+/* 文件上传区域 */
+.upload-section {
+    flex-shrink: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.upload-section h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+#fileInput {
+    padding: 10px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+#uploadForm button {
+    padding: 10px 20px;
+}
+
+/* 对话历史区域 */
+.conversation-history {
+    height: 100%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* 每条消息之间的间距 */
+}
+
+/* 用户消息容器 */
+.user-message.message-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* 用户消息右对齐 */
+}
+
+/* 助手消息容器 */
+.assistant-message.message-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* 助手消息左对齐 */
+}
+
+/* 头像样式 */
+.user-avatar, .assistant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+}
+
+.user-avatar {
+    background-color: #4CAF50;
+}
+
+.assistant-avatar {
+    background-color: #3498db;
+}
+
+/* 名字样式 */
+.name {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+/* 消息气泡通用样式 */
+.message-bubble {
+    max-width: 70%; /* 控制消息宽度 */
+    border-radius: 10px;
+    padding: 10px 15px;
+    word-wrap: break-word;
+}
+
+/* 用户消息气泡 */
+.user-message .message-bubble {
+    background-color: #e0f7fa;
+}
+
+/* 助手消息气泡 */
+.assistant-message .message-bubble {
+    background-color: #c8e6c9;
+}
+
+/* 时间戳样式 */
+.timestamp {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+}
+
+.splitter {
+    width: 10px;
+    cursor: col-resize;
+    background-color: var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+.splitter:hover {
+    background-color: var(--accent-color);
+}
+
+.right-column {
+    display: flex;
+    flex-direction: column;
+    flex: 3;
+    background-color: var(--secondary-color);
+    padding: 10px;
+    overflow: hidden;
+}
+
+.right-column.hidden {
+    flex: 0;
+    width: 0 !important;
+    padding: 0;
+    border: none;
+    overflow: hidden;
+    visibility: hidden;
+}
+
+.knowledge-base-section {
+    flex: 1;
+    overflow-y: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.action-buttons-section {
+    flex-shrink: 0;
+    padding: 10px 0;
+    text-align: center;
+}

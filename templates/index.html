@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朱老师的 RAG Web 应用</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧：对话历史 -->
+        <div class="left-column">
+            <header class="header">
+                <h1>消防小蓝的聪明屋(RAG)</h1>
+            </header>
+
+               <!-- 文件上传表单 -->
+            <section class="upload-section">
+                <h2><i class="fas fa-upload"></i> 上传文件</h2>
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="file" name="file" id="fileInput" accept=".txt,.pdf,.docx,.doc">
+                    <button type="submit"><i class="fas fa-cloud-upload-alt"></i> 上传</button>
+                </form>
+                <p id="uploadMessage"></p>
+            </section>
+
+
+            <!-- 对话历史区域 -->
+            <section class="conversation-section">
+                <h2><i class="fas fa-comments"></i> 对话历史</h2>
+                <div id="conversationHistory" class="conversation-history"></div>
+            </section>
+
+            <!-- 提问表单 -->
+            <footer class="ask-form-section">
+                <form id="askForm">
+                    <textarea id="questionInput" rows="3" placeholder="请输入您的问题..."></textarea><br>
+                    <button type="submit"><i class="fas fa-paper-plane"></i> 提交问题</button>
+                </form>
+            </footer>
+        </div>
+
+        <!-- 分隔条 -->
+        <div class="splitter" onclick="toggleSidebar()"></div>
+
+        <!-- 右侧：知识库管理 -->
+        <div class="right-column">
+            <header class="header">
+                <h2><i class="fas fa-database"></i> 知识库管理</h2>
+            </header>
+            <main class="knowledge-base-section">
+                <table border="1">
+                    <thead>
+                        <tr>
+                            <th>文件名</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="knowledgeBaseTable">
+                        {% for filename in knowledge_base %}
+                        <tr>
+                            <td>{{ filename }}</td>
+                            <td>
+                                <button onclick="deleteFile('{{ filename }}')"><i class="fas fa-trash-alt"></i> 删除</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </main>
+            <footer class="action-buttons-section">
+                <button onclick="clearKnowledgeBase()"><i class="fas fa-broom"></i> 清空全部</button>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+
+        // 文件上传功能
+
+        // 切换右侧栏的显示/隐藏状态
+        function toggleSidebar() {
+            const rightColumn = document.querySelector('.right-column');
+            const leftColumn = document.querySelector('.left-column');
+
+            if (rightColumn.classList.contains('hidden')) {
+                rightColumn.classList.remove('hidden');
+                leftColumn.style.flex = '7';
+            } else {
+                rightColumn.classList.add('hidden');
+                leftColumn.style.flex = '10';
+            }
+        }
+
+        // 更新对话历史
+        function updateConversationHistory(history) {
+            const historyDiv = document.getElementById('conversationHistory');
+            historyDiv.innerHTML = ''; // 清空历史记录
+
+            if (!Array.isArray(history)) {
+                console.error("无效的历史数据:", history);
+                return;
+            }
+
+            history.forEach(entry => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message-container ${entry.role}-message`;
+
+                // 创建头像
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = `${entry.role}-avatar`;
+                avatarDiv.textContent = entry.role === 'user' ? 'U' : 'A'; // U 表示用户，A 表示助手
+
+                // 创建名字
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'name';
+                nameDiv.textContent = entry.role === 'user' ? '用户' : '助手';
+
+                // 创建消息气泡
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = 'message-bubble';
+                bubbleDiv.textContent = entry.content;
+
+                // 创建时间戳
+                const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const timestampSpan = document.createElement('span');
+                timestampSpan.className = 'timestamp';
+                timestampSpan.textContent = timestamp;
+
+                // 组合元素
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(nameDiv);
+                messageDiv.appendChild(bubbleDiv);
+                messageDiv.appendChild(timestampSpan);
+
+                historyDiv.appendChild(messageDiv);
+            });
+
+            // 自动滚动到底部
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+
+        window.onload = function () {
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: "" })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.history) {
+                        updateConversationHistory(data.history);
+                    }
+                });
+
+            refreshKnowledgeBase();
+        };
+
+        document.getElementById('askForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const questionInput = document.getElementById('questionInput').value.trim();
+            if (!questionInput || questionInput.length > 500) {
+                alert(questionInput ? "问题内容过长，请控制在 500 字以内！" : "问题不能为空！");
+                return;
+            }
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question: questionInput })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.history) {
+                        updateConversationHistory(data.history);
+                    } else {
+                        alert("未收到有效的对话历史数据！");
+                    }
+                })
+                .catch(error => {
+                    console.error("请求失败:", error);
+                    alert("提交问题时发生错误，请稍后再试！");
+                });
+
+            // 清空输入框
+            document.getElementById('questionInput').value = '';
+        });
+
+        // 监听 Shift + Enter 提交
+        document.getElementById('questionInput').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && event.shiftKey) {
+                event.preventDefault(); // 阻止默认换行行为
+                document.getElementById('askForm').dispatchEvent(new Event('submit')); // 触发表单提交
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('uploadMessage').textContent = data.message || data.error;
+                refreshKnowledgeBase();
+            });
+        });
+
+        function deleteFile(filename) {
+            fetch(`/delete/${filename}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || data.error);
+                refreshKnowledgeBase();
+            });
+        }
+
+        function clearKnowledgeBase() {
+            fetch('/clear', {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || data.error);
+                refreshKnowledgeBase();
+            });
+        }
+
+        function refreshKnowledgeBase() {
+            fetch('/view')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('knowledgeBaseTable');
+                tableBody.innerHTML = '';
+
+                for (const filename in data) {
+                    const row = document.createElement('tr');
+                    const fileNameCell = document.createElement('td');
+                    fileNameCell.textContent = filename;
+
+                    const actionCell = document.createElement('td');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = '删除';
+                    deleteButton.onclick = () => deleteFile(filename);
+
+                    actionCell.appendChild(deleteButton);
+                    row.appendChild(fileNameCell);
+                    row.appendChild(actionCell);
+                    tableBody.appendChild(row);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
